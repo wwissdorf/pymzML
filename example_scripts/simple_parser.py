@@ -27,7 +27,8 @@ def main(mzml_file):
                 spec.ID,
                 ms_level = spec.ms_level,
                 scan_time = spec.scan_time_in_minutes()
-            )
+            ),
+#            end='\r'
         )
     print(
         'Parsed {0} spectra from file {1}'.format(

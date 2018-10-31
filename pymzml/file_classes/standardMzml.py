@@ -92,7 +92,9 @@ class StandardMzml(object):
 
             start = self.offset_dict[identifier]
             with open(self.path, 'rb') as seeker:
-                seeker.seek(start[0])
+                # print(self.offset_dict)
+                # print(start)
+                seeker.seek(start)
                 start, end = self._read_to_spec_end(seeker)
             self.file_handler.seek(start, 0)
             data     = self.file_handler.read(end - start)
@@ -414,8 +416,11 @@ class StandardMzml(object):
                     if target_index < self.seek_list[0][0] or target_index > self.seek_list[-1][0]:
                         raise Exception(
                             'Spectrum ID should be between'
-                            ' {0} and'.format(self.seek_list[0][0])
-                            ' {self.seek_list[-1][0]}'
+                            ' {0} and {1}'.format(
+                                self.seek_list[0][0],
+                                self.seek_list[-1][0]
+                            )
+
                         )
 
                     element_before = self.seek_list[insert_position - 1]

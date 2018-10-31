@@ -35,8 +35,8 @@ class StandardMzml(object):
         self.offset_dict = dict()
         self.spec_open = regex_patterns.SPECTRUM_OPEN_PATTERN
         self.spec_close = regex_patterns.SPECTRUM_CLOSE_PATTERN
-        self.offset_dict = {}
         self.seek_list = self._read_extremes()
+        self.offset_dict = dict(self.seek_list)
         if len(self.seek_list) > 1:
             self._average_bytes_per_spec = round(
                 int(

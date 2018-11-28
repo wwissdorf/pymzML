@@ -8,6 +8,9 @@ from pymzml.file_classes.standardMzml import StandardMzml
 import unittest
 from pymzml.spec import Spectrum, Chromatogram
 import test_file_paths
+from hypothesis import given
+from hypothesis.strategies import integers
+
 
 class StandardMzmlTest(unittest.TestCase):
     """
@@ -33,15 +36,25 @@ class StandardMzmlTest(unittest.TestCase):
         self.assertEqual(ID, target_ID)
 
         ID = 'TIC'
-        chrom = self.standard_mzml[ ID ]
+        chrom = self.standard_mzml[ID]
         self.assertIsInstance(chrom, Chromatogram)
         self.assertEqual(ID, chrom.ID)
 
-    def test_interpol_search(self):
+    @given(integers(min_value=1, max_value=10))
+    def test_interpol_search(self, choice):
         """
         """
-        spec = self.standard_mzml._interpol_search(5)
+        spec = self.standard_mzml._interpol_search(choice)
         self.assertIsInstance(spec, Spectrum)
+        self.assertEqual(spec.ID, choice)
+
+    @given(integers(min_value=1, max_value=10))
+    def test_binary_search(self, choice):
+        """
+        """
+        spec = self.standard_mzml._binary_search(choice)
+        self.assertIsInstance(spec, Spectrum)
+        self.assertEqual(spec.ID, choice)
 
 if __name__ == '__main__':
     unittest.main(verbosity=3)

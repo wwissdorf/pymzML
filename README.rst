@@ -1,4 +1,3 @@
-
 ############
 Introduction
 ############
@@ -35,22 +34,41 @@ General information
 
 Module to parse mzML data in Python based on cElementTree
 
-Copyright 2010-2018 by:
+Credits
+=======
 
+
+pymzML v2.0
+-----------
+
+Main developpers:
     | M. Kösters,
+    | C. Fufezan,
+
+Code contributions:
     | J. Leufken,
-    | T. Bald,
-    | A. Niehues,
     | S. Schulze,
+
+pymzML v0.7
+-----------
+
+Main developper:
+    | C. Fufezan
+
+Code contributions:
+    | T. Bald,
+    | J. Barth,
+    | A. Niehues,
+
+Support
+-------
+
     | K. Sugimoto,
     | R.P. Zahedi,
     | M. Hippler,
-    | S.A. Leidel,
-    | C. Fufezan,
+    | S.A. Leidel
 
 
-
-===================
 Contact information
 ===================
 
@@ -62,9 +80,10 @@ Please refer to:
     | R&D Platform Technology & Science
     | GSK
     | Germany
+
     | eMail: christian@fufezan.net
     |
-    | http:// <in transition >
+    | https://fufezan.net
 
 
 *******

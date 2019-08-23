@@ -140,10 +140,12 @@ pymzML v2.0
 -----------
 
 Main developpers:
+
     | M. Kösters,
     | C. Fufezan,
 
 Code contributions:
+
     | J. Leufken,
     | S. Schulze,
 
@@ -152,9 +154,11 @@ pymzML v0.7
 -----------
 
 Main developper:
+
     | C. Fufezan
 
 Code contributions:
+
     | T. Bald,
     | J. Barth,
     | A. Niehues,

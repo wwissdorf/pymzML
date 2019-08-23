@@ -34,10 +34,11 @@ General information
 
 Module to parse mzML data in Python based on cElementTree
 
+=======
 Credits
 =======
 
-
+-----------
 pymzML v2.0
 -----------
 
@@ -49,6 +50,7 @@ Code contributions:
     | J. Leufken,
     | S. Schulze,
 
+-----------
 pymzML v0.7
 -----------
 
@@ -60,6 +62,7 @@ Code contributions:
     | J. Barth,
     | A. Niehues,
 
+-------
 Support
 -------
 
@@ -68,7 +71,7 @@ Support
     | M. Hippler,
     | S.A. Leidel
 
-
+===================
 Contact information
 ===================
 

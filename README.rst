@@ -28,6 +28,103 @@ Introduction
    :alt: As long it is black
 
 
+
+*******
+Summary
+*******
+
+pymzML is an extension to Python that offers
+    * a) easy access to mass spectrometry (MS) data that allows the rapid development of tools
+    * b) a very fast parser for mzML data, the standard mass spectrometry data format
+    * c) a set of functions to compare and/or handle spectra
+    * d) random access in compressed files
+    * e) interactive data visualization
+
+**************
+Implementation
+**************
+
+pymzML requires Python3.4+.
+The module is freely available on pymzml.github.com or pypi,
+published under GPL and requires no additional modules to be installed, but can
+optionally use numpy.
+
+
+********
+Download
+********
+
+Get the latest version via github
+    | https://github.com/pymzml/pymzML
+
+The complete Documentation can be found as pdf
+    | http://pymzml.github.com/dist/pymzml.pdf
+
+
+********
+Citation
+********
+
+M Kösters, J Leufken, S Schulze, K Sugimoto, J Klein, R P Zahedi, M Hippler, S A Leidel, C Fufezan; pymzML v2.0: introducing a highly compressed and seekable gzip format, Bioinformatics,
+doi: https://doi.org/10.1093/bioinformatics/bty046
+
+
+************
+Installation
+************
+
+pymzML requires `Python`_ 3.5 or higher.
+
+.. note::
+
+    Consider to use a Python virtual environment for easy installation and use.
+    Further, usage of python3.5+ is recommended.
+
+
+Download pymzML using `GitHub`_ **or** the zip file:
+
+Download pymzML using `GitHub`_ **or** the zip file:
+
+* Via Python Package index::
+
+   user@localhost:~$ pip install pymzml
+   
+* Via GitHub version: Start by cloning the GitHub repository::
+
+   user@localhost:~$ git clone https://github.com/pymzML/pymzml.git
+   user@localhost:~$ cd pymzml
+   user@localhost:~$ pip install -r requirements.txt
+   user@localhost:~$ python setup.py install
+
+.. _Python:
+   https://www.python.org/downloads/
+
+.. _GitHub:
+   https://github.com/pymzML/pymzml
+
+If you have troubles installing the dependencies, install numpy first separately,
+since pynumpress requires numpy to be installed.
+
+If you use Windows 7 please use the 'SDK7.1 command prompt' for installation
+of pymzML to assure correct compiling of the C extensions.
+
+=======
+Testing
+=======
+
+To test the package and correct installation::
+
+    tox 
+
+
+*************
+Contributing
+*************
+
+Please read the contribution guidelines before contributing `here </CONTRIBUTING.rst>`_
+
+
+
 *******************
 General information
 *******************
@@ -87,95 +184,6 @@ Please refer to:
     | eMail: christian@fufezan.net
     |
     | https://fufezan.net
-
-
-*******
-Summary
-*******
-
-pymzML is an extension to Python that offers
-    * a) easy access to mass spectrometry (MS) data that allows the rapid development of tools
-    * b) a very fast parser for mzML data, the standard mass spectrometry data format
-    * c) a set of functions to compare and/or handle spectra
-    * d) random access in compressed files
-    * e) interactive data visualization
-
-**************
-Implementation
-**************
-
-pymzML requires Python3.4+.
-The module is freely available on pymzml.github.com or pypi,
-published under GPL and requires no additional modules to be installed, but can
-optionally use numpy.
-
-
-********
-Download
-********
-
-Get the latest version via github
-    | https://github.com/pymzml/pymzML
-
-The complete Documentation can be found as pdf
-    | http://pymzml.github.com/dist/pymzml.pdf
-
-
-********
-Citation
-********
-
-M Kösters, J Leufken, S Schulze, K Sugimoto, J Klein, R P Zahedi, M Hippler, S A Leidel, C Fufezan; pymzML v2.0: introducing a highly compressed and seekable gzip format, Bioinformatics,
-doi: https://doi.org/10.1093/bioinformatics/bty046
-
-
-************
-Installation
-************
-
-pymzML requires `Python`_ 3.4 or higher.
-
-.. note::
-
-    Consider to use a Python virtual environment for easy installation and use.
-    Further, usage of python3.4+ is recommended.
-
-
-Download pymzML using `GitHub`_ **or** the zip file:
-
-* GitHub version: Start by cloning the GitHub repository::
-
-   user@localhost:~$ git clone https://github.com/pymzML/pymzml.git
-   user@localhost:~$ cd pymzml
-   user@localhost:~$ pip install -r requirements.txt
-   user@localhost:~$ python setup.py install
-
-.. _Python:
-   https://www.python.org/downloads/
-
-.. _GitHub:
-   https://github.com/pymzML/pymzml
-
-If you have troubles installing the dependencies, install numpy first separately,
-since pynumpress requires numpy to be installed.
-
-If you use Windows 7 please use the 'SDK7.1 command prompt' for installation
-of pymzML to assure correct compiling of the C extensions.
-
-=======
-Testing
-=======
-
-To test the package and correct installation::
-
-    nosetests tests/*.py
-
-
-*************
-Contributing
-*************
-
-Please read the contribution guidelines before contributing `here </CONTRIBUTING.rst>`_
 
 
 ****************

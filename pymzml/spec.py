@@ -253,15 +253,16 @@ class MS_Spectrum(object):
         d_array_length just for compatibility
         """
         out_data = b64dec(data)
+        #comp = comp[0] ## WW Patch...
         if len(out_data) != 0:
-            if "zlib" in comp or "zlib compression" in comp:
+            if "zlib" in comp[0] or "zlib compression" in comp:
                 out_data = zlib.decompress(out_data)
             if (
                 "ms-np-linear" in comp
                 or "ms-np-pic" in comp
                 or "ms-np-slof" in comp
-                or "MS-Numpress linear prediction compression" in comp
-                or "MS-Numpress short logged float compression" in comp
+                or "MS-Numpress linear prediction compression" in comp[0]
+                or "MS-Numpress short logged float compression" in comp[0]
             ):
 
                 out_data = self._decodeNumpress_to_array(out_data, comp)
@@ -325,14 +326,25 @@ class MS_Spectrum(object):
 
         """
         result = []
-        comp_ms_tags = [self.calling_instance.OT[comp]["id"] for comp in compression]
+        #comp_ms_tags = [self.calling_instance.OT[comp]["id"] for comp in compression]
+        comp_ms_tags = compression[0]
+
+        'MS-Numpress short logged float compression'
         data = np.frombuffer(data, dtype=np.uint8)
-        if "MS:1002312" in comp_ms_tags:
+        if 'MS-Numpress linear prediction compression' in comp_ms_tags:
             result = MSDecoder.decode_linear(data)
         elif "MS:1002313" in comp_ms_tags:
             result = MSDecoder.decode_pic(data)
-        elif "MS:1002314" in comp_ms_tags:
+        elif 'MS-Numpress short logged float compression' in comp_ms_tags:
             result = MSDecoder.decode_slof(data)
+
+        #if "MS:1002312" in comp_ms_tags:
+        #    result = MSDecoder.decode_linear(data)
+        #elif "MS:1002313" in comp_ms_tags:
+        #    result = MSDecoder.decode_pic(data)
+        #elif "MS:1002314" in comp_ms_tags:
+        #    result = MSDecoder.decode_slof(data)
+
         return result
 
     def _median(self, data):

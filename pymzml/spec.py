@@ -93,7 +93,7 @@ class MS_Spectrum(object):
     def _read_accessions(self):
         """Set all required variables for this spectrum."""
         self.accessions = {}
-        for element in self.element.getiterator():
+        for element in self.element.iter():
             accession = element.get("accession")
             name = element.get("name")
             if accession is not None:
@@ -170,20 +170,26 @@ class MS_Spectrum(object):
         Returns:
             data (str)           : encoded data
             comp (str)           : compression method
-            fType (str)          : float precision
+            d_type (str)         : data type
             d_array_length (str) : length of the data array
         """
         numpress_encoding = False
 
         # array_type_accession = self.calling_instance.OT[array_type]["id"]
 
-        b_data_string = "./{ns}binaryDataArrayList/{ns}binaryDataArray/{ns}cvParam[@name='{Acc}']/..".format(
-            ns=self.ns, Acc=array_type
+        b_data_string = "./{ns}binaryDataArrayList/{ns}binaryDataArray/{ns}cvParam[@name='{name}']/..".format(
+            ns=self.ns, name=array_type
         )
-
         float_type_string = "./{ns}cvParam[@accession='{Acc}']"
 
         b_data_array = self.element.find(b_data_string)
+        if not b_data_array:
+            # non-standard data array
+            b_data_string = "./{ns}binaryDataArrayList/{ns}binaryDataArray/{ns}cvParam[@value='{value}']/..".format(
+                ns=self.ns, value=array_type
+            )
+            b_data_array = self.element.find(b_data_string)
+
         comp = []
         if b_data_array:
             for cvParam in b_data_array.iterfind("./{ns}cvParam".format(ns=self.ns)):
@@ -195,35 +201,68 @@ class MS_Spectrum(object):
             if not numpress_encoding:
                 try:
                     # 32-bit float
-                    f_type = b_data_array.find(
+                    d_type = b_data_array.find(
                         float_type_string.format(
                             ns=self.ns,
                             Acc=self.calling_instance.OT["32-bit float"]["id"],
                         )
                     ).get("name")
                 except:
-                    # 64-bit Float
-                    f_type = b_data_array.find(
-                        float_type_string.format(
-                            ns=self.ns,
-                            Acc=self.calling_instance.OT["64-bit float"]["id"],
-                        )
-                    ).get("name")
+                    try:
+                        # 64-bit Float
+                        d_type = b_data_array.find(
+                            float_type_string.format(
+                                ns=self.ns,
+                                Acc=self.calling_instance.OT["64-bit float"]["id"],
+                            )
+                        ).get("name")
+                    except:
+                        try:
+                            # 32-bit integer
+                            d_type = b_data_array.find(
+                                float_type_string.format(
+                                    ns=self.ns,
+                                    Acc=self.calling_instance.OT["32-bit integer"][
+                                        "id"
+                                    ],
+                                )
+                            ).get("name")
+                        except:
+                            try:
+                                # 64-bit integer
+                                d_type = b_data_array.find(
+                                    float_type_string.format(
+                                        ns=self.ns,
+                                        Acc=self.calling_instance.OT["64-bit integer"][
+                                            "id"
+                                        ],
+                                    )
+                                ).get("name")
+                            except:
+                                # null-terminated ASCII string
+                                d_type = b_data_array.find(
+                                    float_type_string.format(
+                                        ns=self.ns,
+                                        Acc=self.calling_instance.OT[
+                                            "null-terminated ASCII string"
+                                        ]["id"],
+                                    )
+                                ).get("name")
             else:
-                # compression is numpress, dont need floattype here
-                f_type = None
+                # compression is numpress, dont need data type here
+                d_type = None
             data = b_data_array.find("./{ns}binary".format(ns=self.ns))
             if data is not None:
                 data = data.text
         else:
             data = None
             d_array_length = 0
-            f_type = "64-bit float"
+            d_type = "64-bit float"
         if data is not None:
             data = data.encode("utf-8")
         else:
             data = ""
-        return (data, d_array_length, f_type, comp)
+        return (data, d_array_length, d_type, comp)
 
     @property
     def measured_precision(self):
@@ -241,7 +280,7 @@ class MS_Spectrum(object):
         self.internal_precision = int(round(50000.0 / (value * 1e6)))
         return
 
-    def _decode_to_numpy(self, data, d_array_length, float_type, comp):
+    def _decode_to_numpy(self, data, d_array_length, data_type, comp):
         """
         Decode the b64 encoded and packed strings from data as numpy arrays.
 
@@ -266,14 +305,25 @@ class MS_Spectrum(object):
             ):
 
                 out_data = self._decodeNumpress_to_array(out_data, comp)
-            if float_type == "32-bit float":
+            if data_type == "32-bit float":
                 # one character code may be sufficient too (f)
                 f_type = np.float32
                 out_data = np.frombuffer(out_data, f_type)
-            elif float_type == "64-bit float":
+            elif data_type == "64-bit float":
                 # one character code may be sufficient too (d)
                 f_type = np.float64
                 out_data = np.frombuffer(out_data, f_type)
+            elif data_type == "32-bit integer":
+                # one character code may be sufficient too (i)
+                i_type = np.int32
+                out_data = np.frombuffer(out_data, i_type)
+            elif data_type == "64-bit integer":
+                # one character code may be sufficient too (l)
+                i_type = np.int64
+                out_data = np.frombuffer(out_data, i_type)
+            # TODO elif data_type == "null-terminated ASCII string":
+            else:
+                raise ValueError(f"Unsupported data type: {data_type}")
         else:
             out_data = np.array([])
         return out_data
@@ -438,6 +488,7 @@ class Spectrum(MS_Spectrum):
         self._t_mass_set = None
         self._t_mz_set = None
         self._TIC = None
+        self._precursors = None
         self._transformed_mass_with_error = None
         self._transformed_mz_with_error = None
         self._transformed_peaks = None
@@ -493,6 +544,8 @@ class Spectrum(MS_Spectrum):
         if self._peak_dict["reprofiled"] is None:
             reprofiled = self._reprofile_Peaks()
             self.set_peaks(reprofiled, "reprofiled")
+        if other_spec._peak_dict["reprofiled"] is None:
+            other_spec.set_peaks(other_spec._reprofile_Peaks(), "reprofiled")
         for mz, i in other_spec.peaks("reprofiled"):
             self._peak_dict["reprofiled"][mz] += i
         return self
@@ -511,6 +564,8 @@ class Spectrum(MS_Spectrum):
         assert isinstance(other_spec, Spectrum)
         if self._peak_dict["reprofiled"] is None:
             self.set_peaks(self._reprofile_Peaks(), "reprofiled")
+        if other_spec._peak_dict["reprofiled"] is None:
+            other_spec.set_peaks(other_spec._reprofile_Peaks(), "reprofiled")
         for mz, i in other_spec.peaks("reprofiled"):
             self._peak_dict["reprofiled"][mz] -= i
         self.set_peaks(None, "centroided")
@@ -895,6 +950,8 @@ class Spectrum(MS_Spectrum):
         """
         if self._scan_time_in_minutes is None:
             self._scan_time, time_unit = self.scan_time
+            if self._scan_time_unit.lower() == "millisecond":
+                self._scan_time_in_minutes = self._scan_time / 1000.0 / 60.0
             if self._scan_time_unit.lower() == "second":
                 self._scan_time_in_minutes = self._scan_time / 60.0
             elif self._scan_time_unit.lower() == "minute":
@@ -919,8 +976,12 @@ class Spectrum(MS_Spectrum):
             selected_precursor_mzs = self.element.findall(
                 ".//*[@accession='MS:1000744']"
             )
-            selected_precursor_is = self.element.findall(".//*[@accession='MS:1000042']")
-            selected_precursor_cs = self.element.findall(".//*[@accession='MS:1000041']")
+            selected_precursor_is = self.element.findall(
+                ".//*[@accession='MS:1000042']"
+            )
+            selected_precursor_cs = self.element.findall(
+                ".//*[@accession='MS:1000041']"
+            )
             precursors = self.element.findall(
                 "./{ns}precursorList/{ns}precursor".format(ns=self.ns)
             )
@@ -971,7 +1032,7 @@ class Spectrum(MS_Spectrum):
             precursor(list): list of precursor ids for this spectrum.
         """
         self.deprecation_warning(sys._getframe().f_code.co_name)
-        if self._precursors is None:
+        if not self._precursors:
             precursors = self.element.findall(
                 "./{ns}precursorList/{ns}precursor".format(ns=self.ns)
             )
@@ -1199,7 +1260,9 @@ class Spectrum(MS_Spectrum):
         try:
             profile_ot = self.calling_instance.OT.name.get("profile spectrum", None)
             if profile_ot is None:
-                profile_ot = self.calling_instance.OT.name.get("profile mass spectrum", None)
+                profile_ot = self.calling_instance.OT.name.get(
+                    "profile mass spectrum", None
+                )
             acc = profile_ot["id"]
             is_profile = (
                 True
@@ -1311,7 +1374,7 @@ class Spectrum(MS_Spectrum):
             ref = ref.get("ref")
         ele = ref_element.find(".//*[@id='{ref}']".format(ref=ref, ns=self.ns))
         if ele is not None and ref == ele.get("id"):
-            for param in ele.getiterator():
+            for param in ele.iter():
                 self.element.append(ele)
                 acc = param.get("accession")
 
@@ -1359,7 +1422,8 @@ class Spectrum(MS_Spectrum):
             noise_level = self.estimated_noise_level(mode=mode)
         if len(self.peaks("centroided")) != 0:
             self._peak_dict["centroided"] = self.peaks("centroided")[
-                self.peaks("centroided")[:, 1] / noise_level >= signal_to_noise_threshold
+                self.peaks("centroided")[:, 1] / noise_level
+                >= signal_to_noise_threshold
             ]
         if len(self.peaks("raw")) != 0:
             self._peak_dict["raw"] = self.peaks("raw")[

@@ -39,10 +39,11 @@ from .. import regex_patterns
 
 
 class StandardMzml(object):
-    """
-    """
+    """ """
 
-    def __init__(self, path, encoding, build_index_from_scratch=False, index_regex=None):
+    def __init__(
+        self, path, encoding, build_index_from_scratch=False, index_regex=None
+    ):
         """
         Initalize Wrapper object for standard mzML files.
 
@@ -137,7 +138,7 @@ class StandardMzml(object):
         """
         chunk_size = 12800
         offset_scale = 1
-        jump_history = {'forwards': 0, 'backwards': 0}
+        jump_history = {"forwards": 0, "backwards": 0}
         # This will be used if no spec was found at all during a jump
         # self._average_bytes_per_spec *= 10
         with open(self.path, "rb") as seeker:
@@ -173,10 +174,10 @@ class StandardMzml(object):
                     # which side are we closer to ...
                     if spec_offset_m1 < spec_offset_p1:
                         # print("Closer to m1 - jumping forward")
-                        jump_direction = 'forwards'
-                        jump_history['backwards'] = 0
-                        jump_history['forwards'] += 1
-                        byte_offset = element_before[1] + jump_history['forwards'] * (
+                        jump_direction = "forwards"
+                        jump_history["backwards"] = 0
+                        jump_history["forwards"] += 1
+                        byte_offset = element_before[1] + jump_history["forwards"] * (
                             offset_scale * average_spec_between_m1_p1 * spec_offset_m1
                         )
                         if (target_index - element_before[0]) < 10:
@@ -184,10 +185,10 @@ class StandardMzml(object):
                             # and read chunks until found
                             byte_offset = element_before[1]
                     else:
-                        jump_direction = 'backwards'
-                        jump_history['forwards'] = 0
-                        jump_history['backwards'] += 1
-                        byte_offset = element_after[1] - jump_history['backwards'] * (
+                        jump_direction = "backwards"
+                        jump_history["forwards"] = 0
+                        jump_history["backwards"] += 1
+                        byte_offset = element_after[1] - jump_history["backwards"] * (
                             offset_scale * average_spec_between_m1_p1 * spec_offset_p1
                         )
                     byte_offset = int(byte_offset)
@@ -203,19 +204,21 @@ class StandardMzml(object):
                     matches = re.finditer(regex_patterns.SPECTRUM_OPEN_PATTERN, chunk)
                     for _match_number, match in enumerate(matches):
                         if match is not None:
-                            scan = int(re.search(b"[0-9]*$", match.group("id")).group())
+                            spec_info = match.groups()
+                            spec_info = dict(zip(spec_info[0::2], spec_info[1::2]))
+                            scan = int(re.search(b"[0-9]*$", spec_info[b"id"]).group())
                             # print(">>", _match_number, scan)
-                            if jump_direction == 'forwards':
+                            if jump_direction == "forwards":
                                 if scan > target_index:
                                     # we went to far ...
                                     offset_scale = 0.1
-                                    jump_history['forwards'] = 0
+                                    jump_history["forwards"] = 0
                                 else:
                                     offset_scale = 1
-                            if jump_direction == 'backwards':
+                            if jump_direction == "backwards":
                                 if scan < target_index:
                                     offset_scale = 0.1
-                                    jump_history['backwards'] = 0
+                                    jump_history["backwards"] = 0
                                 else:
                                     offset_scale = 1
 
@@ -228,9 +231,7 @@ class StandardMzml(object):
                             )
                             new_pos = bisect.bisect_left(self.seek_list, new_entry)
                             self.seek_list.insert(new_pos, new_entry)
-                            self.offset_dict[scan] = (
-                                byte_offset + match.start(),
-                            )
+                            self.offset_dict[scan] = (byte_offset + match.start(),)
                             if int(scan) == int(target_index):
                                 # maybe jump from other boarder
                                 break_outer = True
@@ -333,9 +334,9 @@ class StandardMzml(object):
                         native_id = bytes.decode(match_sim.group("nativeID"))
                         try:
                             native_id = int(
-                                regex_patterns.SPECTRUM_ID_PATTERN2.search(native_id).group(
-                                    2
-                                )
+                                regex_patterns.SPECTRUM_ID_PATTERN2.search(
+                                    native_id
+                                ).group(2)
                             )
                         except AttributeError:
                             # match is None and has no attribute group,
@@ -357,10 +358,9 @@ class StandardMzml(object):
             seeker.seek(0)
             self._build_index_from_scratch(seeker)
         else:
-            print('[Warning] Not index found and build_index_from_scratch is False')
+            print("[Warning] Not index found and build_index_from_scratch is False")
 
         seeker.close()
-
 
     def _build_index_from_scratch(self, seeker):
         """Build an index of spectra/chromatogram data with offsets by parsing the file."""
@@ -493,9 +493,9 @@ class StandardMzml(object):
             if spec_start is not None:
                 spec_start_offset = file_pointer + spec_start.start()
                 seeker.seek(spec_start_offset)
-                current_index = int(
-                    re.search(b"[0-9]*$", spec_start.group("id")).group()
-                )
+                spec_info = self.spec_open.search(data).groups()
+                spec_info = dict(zip(spec_info[0::2], spec_info[1::2]))
+                current_index = int(re.search(b"[0-9]*$", spec_info[b"id"]).group())
 
                 self.offset_dict[current_index] = (spec_start_offset,)
                 if current_index in used_indices:
@@ -519,9 +519,10 @@ class StandardMzml(object):
                         current_position = seeker.tell()
                         data = seeker.read(chunk_size)
                         if self.spec_open.search(data):
-                            spec_start = self.spec_open.search(data)
+                            spec_info = self.spec_open.search(data).groups()
+                            spec_info = dict(zip(spec_info[0::2], spec_info[1::2]))
                             current_index = int(
-                                re.search(b"[0-9]*$", spec_start.group("id")).group()
+                                re.search(b"[0-9]*$", spec_info[b"id"]).group()
                             )
                     seeker.seek(current_position)
                     spectrum = self._search_linear(seeker, target_index)
@@ -551,9 +552,12 @@ class StandardMzml(object):
                     current_position = seeker.tell()
 
             elif len(data) == 0:
-                sorted_keys = sorted(self.offset_dict.keys())
+                sorted_int_keys = {
+                    k: v for k, v in self.offset_dict.items() if isinstance(k, int)
+                }
+                sorted_keys = sorted(sorted_int_keys.keys())
                 pos = (
-                    bisect.bisect_left(sorted_keys, target_index) - 2
+                    bisect.bisect_left(sorted_int_keys, target_index) - 2
                 )  # dat magic number :)
                 try:
                     key = sorted_keys[pos]
@@ -587,20 +591,16 @@ class StandardMzml(object):
         start_pos = seeker.tell()
         data_chunk = seeker.read(chunk_size)
         while end_found is False:
-            chunk_offset = seeker.tell()
             data_chunk += seeker.read(chunk_size)
             tag_end, seeker = self._read_until_tag_end(seeker)
             data_chunk += tag_end
             if regex_patterns.SPECTRUM_CLOSE_PATTERN.search(data_chunk):
                 match = regex_patterns.SPECTRUM_CLOSE_PATTERN.search(data_chunk)
-                relative_pos_in_chunk = match.end()
-                end_pos = chunk_offset + relative_pos_in_chunk
                 end_pos = match.end()
                 end_found = True
             elif regex_patterns.CHROMATOGRAM_CLOSE_PATTERN.search(data_chunk):
                 match = regex_patterns.CHROMATOGRAM_CLOSE_PATTERN.search(data_chunk)
-                relative_pos_in_chunk = match.end()
-                end_pos = chunk_offset + relative_pos_in_chunk
+                end_pos = match.end()
                 end_found = True
         return (start_pos, end_pos)
 
@@ -686,9 +686,9 @@ class StandardMzml(object):
             if spec_start:
                 spec_start_offset = file_pointer + spec_start.start()
                 seeker.seek(spec_start_offset)
-                current_index = int(
-                    re.search(b"[0-9]*$", spec_start.group("id")).group()
-                )
+                spec_info = spec_start.groups()
+                spec_info = dict(zip(spec_info[0::2], spec_info[1::2]))
+                current_index = int(re.search(b"[0-9]*$", spec_info[b"id"]).group())
                 # print(current_index)
                 spec_end = self.spec_close.search(data[spec_start.start() :])
                 if spec_end:
@@ -743,7 +743,7 @@ class StandardMzml(object):
                 file_pointer = seeker.tell()
 
                 data = seeker.read(total_chunk_size)
-                string, seeker = self._read_until_tag_end(seeker, byte_mode=True)
+                string, seeker = self._read_until_tag_end(seeker)
                 data += string
                 spec_start = regex_string.search(data)
                 chrom_start = regex_patterns.CHROMO_OPEN_PATTERN.search(data)
@@ -769,7 +769,7 @@ class StandardMzml(object):
                 elif len(data) == 0:
                     raise Exception("cant find specified string")
 
-    def _read_until_tag_end(self, seeker, max_search_len=12, byte_mode=False):
+    def _read_until_tag_end(self, seeker, max_search_len=12):
         """
         Help make sure no splitted text appear in chunked data, so regex always find
         <spectrum ...>
@@ -803,10 +803,8 @@ class StandardMzml(object):
         return self.file_handler.read(size)
 
     def close(self):
-        """
-        """
+        """ """
         self.file_handler.close()
-
 
 
 if __name__ == "__main__":

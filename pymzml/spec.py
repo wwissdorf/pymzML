@@ -305,7 +305,7 @@ class MS_Spectrum(object):
             ):
 
                 out_data = self._decodeNumpress_to_array(out_data, comp)
-            if data_type == "32-bit float":
+            elif data_type == "32-bit float":
                 # one character code may be sufficient too (f)
                 f_type = np.float32
                 out_data = np.frombuffer(out_data, f_type)

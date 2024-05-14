@@ -6,6 +6,11 @@ SPECTRUM_INDEX_PATTERN = re.compile(
     b'(?P<type>(scan=|nativeID="))(?P<nativeID>[0-9]*)">"'
     b"(?P<offset>[0-9]*)</offset>"
 )
+
+SPECTRUM_INDEX_PATTERN_SCIEX = re.compile(
+    b'(?P<type>(cycle=))(?P<nativeID>[0-9]*) experiment=[0-9]*">(?P<offset>[0-9]*)</offset>'
+)
+
 """
 Regex pattern for spectrum index
 works for obo format 1.1.0 until <last version checked>
@@ -18,6 +23,10 @@ Catches:
 
 SIM_INDEX_PATTERN = re.compile(
     b'(?P<type>idRef=")(?P<nativeID>.*)">(?P<offset>[0-9]*)</offset>'
+)
+
+SIM_INDEX_PATTERN_SCIEX = re.compile(
+    b'(?P<type>(idRef=))"sample=[0-9]* period=[0-9]* cycle=(?P<nativeID>[0-9]*) experiment=[0-9]*">(?P<offset>[0-9]*)</offset>'
 )
 """
 Regex pattern for SIM index

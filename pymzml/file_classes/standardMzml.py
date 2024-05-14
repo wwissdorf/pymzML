@@ -282,7 +282,7 @@ class StandardMzml(object):
         seeker.seek(0, 2)
         index_found = False
 
-        spectrum_index_pattern = regex_patterns.SPECTRUM_INDEX_PATTERN
+        spectrum_index_pattern = regex_patterns.SPECTRUM_INDEX_PATTERN_SCIEX
         for _ in range(1, 10):  # max 10kbyte
             # some converters fail in writing a correct index
             # we found
@@ -317,7 +317,7 @@ class StandardMzml(object):
             # Jumping to index list and slurpin all specOffsets
             seeker.seek(index_list_offset, 0)
             spectrum_index_pattern = regex_patterns.SPECTRUM_INDEX_PATTERN
-            sim_index_pattern = regex_patterns.SIM_INDEX_PATTERN
+            sim_index_pattern = regex_patterns.SIM_INDEX_PATTERN_SCIEX
 
             for line in seeker:
                 match_spec = spectrum_index_pattern.search(line)
@@ -344,14 +344,14 @@ class StandardMzml(object):
                             pass
                         self.offset_dict[native_id] = (offset,)
                 else:
-                    match = self.index_regex.search(line)
+                    match = sim_index_pattern.search(line)
                     if match:
-                        native_id = match.group("ID")
+                        native_id = match.group("nativeID")
                         try:
                             native_id = int(native_id)
                         except ValueError:
                             pass
-                        offset = match.group("offset")
+                        offset = int(bytes.decode(match.group("offset")))
                         self.offset_dict[native_id] = (offset,)
 
         elif from_scratch is True:
@@ -618,6 +618,11 @@ class StandardMzml(object):
         seek_list = []
         with open(self.path, "rb") as seeker:
             buffer = b""
+
+            if self.index_regex is None:
+                spectrum_id_pattern = regex_patterns.SPECTRUM_ID_PATTERN_SIMPLE
+            else:
+                spectrum_id_pattern = re.compile(self.index_regex)
             for x in range(100):
                 try:
                     seeker.seek(os.SEEK_SET + x * chunk_size)
@@ -627,7 +632,7 @@ class StandardMzml(object):
                 buffer += chunk
                 match = regex_patterns.SPECTRUM_OPEN_PATTERN_SIMPLE.search(buffer)
                 if match is not None:
-                    id_match = regex_patterns.SPECTRUM_ID_PATTERN_SIMPLE.search(buffer)
+                    id_match = spectrum_id_pattern.search(buffer)
                     try:
                         first_scan = int(
                             re.search(b"[0-9]*$", id_match.group("id")).group()
@@ -654,7 +659,7 @@ class StandardMzml(object):
                     regex_patterns.SPECTRUM_OPEN_PATTERN_SIMPLE.finditer(buffer)
                 )
                 if len(matches) != 0:
-                    id_match = regex_patterns.SPECTRUM_ID_PATTERN_SIMPLE.search(
+                    id_match = spectrum_id_pattern.search(
                         buffer[matches[-1].start() :]
                     )
                     last_scan = int(re.search(b"[0-9]*$", id_match.group("id")).group())
